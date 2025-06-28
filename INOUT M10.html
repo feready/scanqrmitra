@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Scan QR & Auto Submit</title>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+  <style>
+    body { font-family: sans-serif; text-align: center; padding: 20px; }
+    button, select {
+      padding: 10px 20px;
+      margin: 10px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+    #reader { width: 300px; margin: auto; margin-top: 20px; }
+    #status-info { margin-top: 10px; font-weight: bold; }
+  </style>
+</head>
+<body>
+
+  <h2>Scan QR: Input ke Google Form</h2>
+
+  <label>Status:</label><br>
+  <button onclick="setStatus('MASUK')">MASUK</button>
+  <button onclick="setStatus('KELUAR')">KELUAR</button><br>
+
+  <label for="aktivitas">Jenis Aktivitas:</label><br>
+  <select id="aktivitas">
+    <option value="">-- Pilih Aktivitas --</option>
+    <option value="KERJA">KERJA</option>
+    <option value="ISTIRAHAT">ISTIRAHAT</option>
+    <option value="IZIN">IZIN</option>
+  </select><br>
+
+  <label for="shift">Shift:</label><br>
+  <select id="shift">
+    <option value="">-- Pilih Shift --</option>
+    <option value="PAGI">PAGI</option>
+    <option value="SIANG">SIANG</option>
+    <option value="TL">TL</option>
+  </select><br>
+
+  <div id="status-info">Silakan pilih semua opsi di atas sebelum scan.</div>
+  <div id="reader"></div>
+  <div id="result" style="margin-top: 20px; font-size: 18px;"></div>
+
+  <script>
+    let selectedStatus = "";
+
+    const formSubmitURL = "https://docs.google.com/forms/d/e/1FAIpQLSdJBi1gBbRo4oOA6kBYxBdkDly7yTyCYF9j_vTdQm6CiAQi4A/formResponse";
+    const salperField = "entry.1277069673";
+    const statusField = "entry.2120193236";
+    const aktivitasField = "entry.225901776";
+    const shiftField = "entry.1990783458";
+
+    function setStatus(status) {
+      selectedStatus = status;
+      updateInfo();
+    }
+
+    function updateInfo() {
+      const aktivitas = document.getElementById("aktivitas").value;
+      const shift = document.getElementById("shift").value;
+      document.getElementById("status-info").innerText =
+        `Status: ${selectedStatus || "-"}, Aktivitas: ${aktivitas || "-"}, Shift: ${shift || "-"}`;
+    }
+
+    document.getElementById("aktivitas").addEventListener("change", updateInfo);
+    document.getElementById("shift").addEventListener("change", updateInfo);
+
+    function onScanSuccess(decodedText) {
+      const aktivitas = document.getElementById("aktivitas").value;
+      const shift = document.getElementById("shift").value;
+
+      if (!selectedStatus || !aktivitas || !shift) {
+        alert("Harap pilih semua kolom terlebih dahulu.");
+        return;
+      }
+
+      const formData = new FormData();
+      formData.append(salperField, decodedText);
+      formData.append(statusField, selectedStatus);
+      formData.append(aktivitasField, aktivitas);
+      formData.append(shiftField, shift);
+
+      fetch(formSubmitURL, {
+        method: "POST",
+        mode: "no-cors",
+        body: formData
+      }).then(() => {
+        document.getElementById("result").innerText = `✅ Data dikirim:\nSalper: ${decodedText}\nStatus: ${selectedStatus}\nAktivitas: ${aktivitas}\nShift: ${shift}`;
+        setTimeout(() => {
+          document.getElementById("result").innerText = "";
+        }, 4000);
+      });
+
+      // Reset
+      selectedStatus = "";
+      document.getElementById("aktivitas").value = "";
+      document.getElementById("shift").value = "";
+      updateInfo();
+    }
+
+    new Html5Qrcode("reader").start(
+      { facingMode: "environment" },
+      { fps: 10, qrbox: 250 },
+      onScanSuccess
+    );
+  </script>
+
+</body>
+</html>
