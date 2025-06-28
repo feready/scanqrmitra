@@ -1,53 +1,110 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Scan QR & Auto Submit</title>
+  <title>QR Scan & Auto Submit</title>
   <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
-    body { font-family: sans-serif; text-align: center; padding: 20px; }
+    body {
+      font-family: 'Segoe UI', sans-serif;
+      text-align: center;
+      padding: 20px;
+      margin: 0;
+      background: linear-gradient(to bottom, #e0f2fe, #ffffff);
+    }
+
+    h2 {
+      color: #0f172a;
+    }
+
+    .section {
+      margin-bottom: 20px;
+    }
+
     button, select {
-      padding: 10px 20px;
+      padding: 12px 24px;
       margin: 10px;
       font-size: 16px;
+      border: none;
+      border-radius: 8px;
       cursor: pointer;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.2);
     }
-    #reader { width: 300px; margin: auto; margin-top: 20px; }
-    #status-info { margin-top: 10px; font-weight: bold; }
+
+    button.status-masuk { background-color: #10b981; color: white; }
+    button.status-keluar { background-color: #ef4444; color: white; }
+
+    select {
+      background-color: #3b82f6;
+      color: white;
+    }
+
+    #reader {
+      width: 300px;
+      margin: 20px auto;
+      border-radius: 12px;
+      box-shadow: 0 0 10px rgba(0,0,0,0.3);
+      padding: 10px;
+      background: white;
+    }
+
+    #status-info {
+      margin-top: 10px;
+      font-weight: bold;
+      color: #1e3a8a;
+    }
+
+    #result {
+      margin-top: 20px;
+      font-size: 18px;
+      color: #16a34a;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
 
-  <h2>AKTIFITAS KARYAWAN</h2>
+  <h2>📲 Scan QR: Aktifitas Karyawan</h2>
 
-  <label>Status:</label><br>
-  <button onclick="setStatus('MASUK')">MASUK</button>
-  <button onclick="setStatus('KELUAR')">KELUAR</button><br>
+  <div class="section">
+    <label>Status:</label><br>
+    <button class="status-masuk" onclick="setStatus('MASUK')">MASUK</button>
+    <button class="status-keluar" onclick="setStatus('KELUAR')">KELUAR</button>
+  </div>
 
-  <label for="aktivitas">Jenis Aktivitas:</label><br>
-  <select id="aktivitas">
-    <option value="">-- Pilih Aktivitas --</option>
+  <div class="section">
+    <label for="aktivitas">Jenis Aktivitas:</label><br>
+    <select id="aktivitas">
+      <option value="">-- Pilih Aktivitas --</option>
     <option value="LAIN LAIN">LAIN LAIN</option>
     <option value="ISTIRAHAT">ISTIRAHAT</option>
     <option value="PRINT POP">PRINT POP</option>
     <option value="TOILET">TOILET</option>
     <option value="LOCKER">LOCKER</option>
+    </select>
+  </div>
 
-  </select><br>
-
-  <label for="zona">Zona:</label><br>
-  <select id="zona">
-    <option value="">-- Pilih Zona --</option>
+  <div class="section">
+    <label for="zona">Zona:</label><br>
+    <select id="zona">
+      <option value="">-- Pilih Zona --</option>
     <option value="ZONA 1">ZONA 1</option>
     <option value="ZONA 2">ZONA 2</option>
     <option value="ZONA 3">ZONA 3</option>
     <option value="ZONA 4">ZONA 4</option>
     <option value="ZONA 5">ZONA 5</option>
     <option value="ZONA 6">ZONA 6</option>
-  </select><br>
+    </select>
+  </div>
 
-  <div id="status-info">Silakan pilih semua opsi di atas sebelum scan.</div>
+  <div id="status-info">Silakan pilih semua opsi sebelum scan QR</div>
   <div id="reader"></div>
-  <div id="result" style="margin-top: 20px; font-size: 18px;"></div>
+  <div id="result"></div>
+
+  <!-- Beep Audio -->
+  <audio id="beep-sound" preload="auto">
+    <source src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg" type="audio/ogg">
+    <source src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.mp3" type="audio/mpeg">
+  </audio>
 
   <script>
     let selectedStatus = "";
@@ -73,9 +130,24 @@
     document.getElementById("aktivitas").addEventListener("change", updateInfo);
     document.getElementById("zona").addEventListener("change", updateInfo);
 
+    function playBeep() {
+      const beep = document.getElementById("beep-sound");
+      if (beep) {
+        beep.currentTime = 0;
+        beep.play().catch(() => {});
+      }
+    }
+
     function onScanSuccess(decodedText) {
       const aktivitas = document.getElementById("aktivitas").value;
       const zona = document.getElementById("zona").value;
+
+      // Validasi QR: hanya QR Salper
+      const salperPattern = /^S\d{5}-\d{10}$/;
+      if (!salperPattern.test(decodedText)) {
+        alert("QR tidak valid. Hanya QR Salper yang diperbolehkan.");
+        return;
+      }
 
       if (!selectedStatus || !aktivitas || !zona) {
         alert("Harap pilih semua kolom terlebih dahulu.");
@@ -93,7 +165,8 @@
         mode: "no-cors",
         body: formData
       }).then(() => {
-        document.getElementById("result").innerText = `✅ Data dikirim:\nSalper: ${decodedText}\nStatus: ${selectedStatus}\nAktivitas: ${aktivitas}\nZona: ${zona}`;
+        playBeep(); // 🔊 Suara notifikasi
+        document.getElementById("result").innerText = `✅ Data dikirim!\nSalper: ${decodedText}`;
         setTimeout(() => {
           document.getElementById("result").innerText = "";
         }, 4000);
