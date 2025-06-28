@@ -1,14 +1,13 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>QR Scan & Auto Submit</title>
+  <title>Aktifitas Karyawan</title>
   <script src="https://unpkg.com/html5-qrcode"></script>
   <style>
     body {
       font-family: 'Segoe UI', sans-serif;
       text-align: center;
       padding: 20px;
-      margin: 0;
       background: linear-gradient(to bottom, #e0f2fe, #ffffff);
     }
 
@@ -16,27 +15,19 @@
       color: #0f172a;
     }
 
-    .section {
-      margin-bottom: 20px;
-    }
-
-    button, select {
+    button {
       padding: 12px 24px;
       margin: 10px;
       font-size: 16px;
       border: none;
       border-radius: 8px;
       cursor: pointer;
+      color: white;
       box-shadow: 0 2px 4px rgba(0,0,0,0.2);
     }
 
-    button.status-masuk { background-color: #10b981; color: white; }
-    button.status-keluar { background-color: #ef4444; color: white; }
-
-    select {
-      background-color: #3b82f6;
-      color: white;
-    }
+    .masuk { background-color: #10b981; }
+    .keluar { background-color: #ef4444; }
 
     #reader {
       width: 300px;
@@ -47,144 +38,72 @@
       background: white;
     }
 
-    #status-info {
+    #status-info, #result {
       margin-top: 10px;
       font-weight: bold;
+    }
+
+    #status-info {
       color: #1e3a8a;
     }
 
     #result {
-      margin-top: 20px;
-      font-size: 18px;
       color: #16a34a;
-      font-weight: bold;
     }
+
+    audio { display: none; }
   </style>
 </head>
 <body>
 
-  <h2>📲 Scan QR: Aktifitas Karyawan</h2>
+  <h2>📲 Scan Aktifitas Karyawan</h2>
 
-  <div class="section">
-    <label>Status:</label><br>
-    <button class="status-masuk" onclick="setStatus('MASUK')">MASUK</button>
-    <button class="status-keluar" onclick="setStatus('KELUAR')">KELUAR</button>
-  </div>
+  <p>Pilih status terlebih dahulu:</p>
+  <button class="masuk" onclick="setStatus('MASUK')">MASUK</button>
+  <button class="keluar" onclick="setStatus('KELUAR')">KELUAR</button>
 
-  <div class="section">
-    <label for="aktivitas">Jenis Aktivitas:</label><br>
-    <select id="aktivitas">
-      <option value="">-- Pilih Aktivitas --</option>
-    <option value="LAIN LAIN">LAIN LAIN</option>
-    <option value="ISTIRAHAT">ISTIRAHAT</option>
-    <option value="PRINT POP">PRINT POP</option>
-    <option value="TOILET">TOILET</option>
-    <option value="LOCKER">LOCKER</option>
-    </select>
-  </div>
-
-  <div class="section">
-    <label for="zona">Zona:</label><br>
-    <select id="zona">
-      <option value="">-- Pilih Zona --</option>
-    <option value="ZONA 1">ZONA 1</option>
-    <option value="ZONA 2">ZONA 2</option>
-    <option value="ZONA 3">ZONA 3</option>
-    <option value="ZONA 4">ZONA 4</option>
-    <option value="ZONA 5">ZONA 5</option>
-    <option value="ZONA 6">ZONA 6</option>
-    </select>
-  </div>
-
-  <div id="status-info">Silakan pilih semua opsi sebelum scan QR</div>
+  <div id="status-info">Status belum dipilih</div>
   <div id="reader"></div>
   <div id="result"></div>
 
-  <!-- Beep Audio -->
+  <!-- Beep Sound -->
   <audio id="beep-sound" preload="auto">
     <source src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.ogg" type="audio/ogg">
     <source src="https://actions.google.com/sounds/v1/cartoon/clang_and_wobble.mp3" type="audio/mpeg">
   </audio>
 
   <script>
-    let selectedStatus = "";
-
     const formSubmitURL = "https://docs.google.com/forms/d/e/1FAIpQLSdJBi1gBbRo4oOA6kBYxBdkDly7yTyCYF9j_vTdQm6CiAQi4A/formResponse";
     const salperField = "entry.1277069673";
     const statusField = "entry.2120193236";
     const aktivitasField = "entry.225901776";
-    const zonaField = "entry.1990783458";
+
+    let selectedStatus = "";
+    let selectedAktivitas = "";
 
     function setStatus(status) {
       selectedStatus = status;
-      updateInfo();
-    }
-
-    function updateInfo() {
-      const aktivitas = document.getElementById("aktivitas").value;
-      const zona = document.getElementById("zona").value;
+      selectedAktivitas = ""; // reset aktivitas setiap status dipilih ulang
       document.getElementById("status-info").innerText =
-        `Status: ${selectedStatus || "-"}, Aktivitas: ${aktivitas || "-"}, Zona: ${zona || "-"}`;
+        `Status: ${selectedStatus} | Silakan scan QR Aktivitas`;
     }
-
-    document.getElementById("aktivitas").addEventListener("change", updateInfo);
-    document.getElementById("zona").addEventListener("change", updateInfo);
 
     function playBeep() {
       const beep = document.getElementById("beep-sound");
-      if (beep) {
-        beep.currentTime = 0;
-        beep.play().catch(() => {});
-      }
+      beep.currentTime = 0;
+      beep.play().catch(() => {});
+    }
+
+    function showPopup(message) {
+      alert(message);
+    }
+
+    function resetForm() {
+      selectedStatus = "";
+      selectedAktivitas = "";
+      document.getElementById("status-info").innerText = "✅ Silakan pilih status kembali";
+      document.getElementById("result").innerText = "";
     }
 
     function onScanSuccess(decodedText) {
-      const aktivitas = document.getElementById("aktivitas").value;
-      const zona = document.getElementById("zona").value;
-
-      // Validasi QR: hanya QR Salper
-      const salperPattern = /^S\d{5}-\d{10}$/;
-      if (!salperPattern.test(decodedText)) {
-        alert("QR tidak valid. Hanya QR Salper yang diperbolehkan.");
-        return;
-      }
-
-      if (!selectedStatus || !aktivitas || !zona) {
-        alert("Harap pilih semua kolom terlebih dahulu.");
-        return;
-      }
-
-      const formData = new FormData();
-      formData.append(salperField, decodedText);
-      formData.append(statusField, selectedStatus);
-      formData.append(aktivitasField, aktivitas);
-      formData.append(zonaField, zona);
-
-      fetch(formSubmitURL, {
-        method: "POST",
-        mode: "no-cors",
-        body: formData
-      }).then(() => {
-        playBeep(); // 🔊 Suara notifikasi
-        document.getElementById("result").innerText = `✅ Data dikirim!\nSalper: ${decodedText}`;
-        setTimeout(() => {
-          document.getElementById("result").innerText = "";
-        }, 4000);
-      });
-
-      // Reset
-      selectedStatus = "";
-      document.getElementById("aktivitas").value = "";
-      document.getElementById("zona").value = "";
-      updateInfo();
-    }
-
-    new Html5Qrcode("reader").start(
-      { facingMode: "environment" },
-      { fps: 10, qrbox: 250 },
-      onScanSuccess
-    );
-  </script>
-
-</body>
-</html>
+      const aktivitasPattern = /^AKT:[A-Z _]_]()
