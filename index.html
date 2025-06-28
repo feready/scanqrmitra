@@ -17,7 +17,7 @@
 </head>
 <body>
 
-  <h2>Scan QR: Input ke Google Form</h2>
+  <h2>AKTIFITAS KARYAWAN</h2>
 
   <label>Status:</label><br>
   <button onclick="setStatus('MASUK')">MASUK</button>
@@ -26,17 +26,23 @@
   <label for="aktivitas">Jenis Aktivitas:</label><br>
   <select id="aktivitas">
     <option value="">-- Pilih Aktivitas --</option>
-    <option value="KERJA">KERJA</option>
+    <option value="LAIN LAIN">LAIN LAIN</option>
     <option value="ISTIRAHAT">ISTIRAHAT</option>
-    <option value="IZIN">IZIN</option>
+    <option value="PRINT POP">PRINT POP</option>
+    <option value="TOILET">TOILET</option>
+    <option value="LOCKER">LOCKER</option>
+
   </select><br>
 
-  <label for="shift">Shift:</label><br>
-  <select id="shift">
-    <option value="">-- Pilih Shift --</option>
-    <option value="PAGI">PAGI</option>
-    <option value="SIANG">SIANG</option>
-    <option value="TL">TL</option>
+  <label for="zona">Zona:</label><br>
+  <select id="zona">
+    <option value="">-- Pilih Zona --</option>
+    <option value="ZONA 1">ZONA 1</option>
+    <option value="ZONA 2">ZONA 2</option>
+    <option value="ZONA 3">ZONA 3</option>
+    <option value="ZONA 4">ZONA 4</option>
+    <option value="ZONA 5">ZONA 5</option>
+    <option value="ZONA 6">ZONA 6</option>
   </select><br>
 
   <div id="status-info">Silakan pilih semua opsi di atas sebelum scan.</div>
@@ -50,7 +56,7 @@
     const salperField = "entry.1277069673";
     const statusField = "entry.2120193236";
     const aktivitasField = "entry.225901776";
-    const shiftField = "entry.1990783458";
+    const zonaField = "entry.1990783458";
 
     function setStatus(status) {
       selectedStatus = status;
@@ -59,19 +65,19 @@
 
     function updateInfo() {
       const aktivitas = document.getElementById("aktivitas").value;
-      const shift = document.getElementById("shift").value;
+      const zona = document.getElementById("zona").value;
       document.getElementById("status-info").innerText =
-        `Status: ${selectedStatus || "-"}, Aktivitas: ${aktivitas || "-"}, Shift: ${shift || "-"}`;
+        `Status: ${selectedStatus || "-"}, Aktivitas: ${aktivitas || "-"}, Zona: ${zona || "-"}`;
     }
 
     document.getElementById("aktivitas").addEventListener("change", updateInfo);
-    document.getElementById("shift").addEventListener("change", updateInfo);
+    document.getElementById("zona").addEventListener("change", updateInfo);
 
     function onScanSuccess(decodedText) {
       const aktivitas = document.getElementById("aktivitas").value;
-      const shift = document.getElementById("shift").value;
+      const zona = document.getElementById("zona").value;
 
-      if (!selectedStatus || !aktivitas || !shift) {
+      if (!selectedStatus || !aktivitas || !zona) {
         alert("Harap pilih semua kolom terlebih dahulu.");
         return;
       }
@@ -80,14 +86,14 @@
       formData.append(salperField, decodedText);
       formData.append(statusField, selectedStatus);
       formData.append(aktivitasField, aktivitas);
-      formData.append(shiftField, shift);
+      formData.append(zonaField, zona);
 
       fetch(formSubmitURL, {
         method: "POST",
         mode: "no-cors",
         body: formData
       }).then(() => {
-        document.getElementById("result").innerText = `✅ Data dikirim:\nSalper: ${decodedText}\nStatus: ${selectedStatus}\nAktivitas: ${aktivitas}\nShift: ${shift}`;
+        document.getElementById("result").innerText = `✅ Data dikirim:\nSalper: ${decodedText}\nStatus: ${selectedStatus}\nAktivitas: ${aktivitas}\nZona: ${zona}`;
         setTimeout(() => {
           document.getElementById("result").innerText = "";
         }, 4000);
@@ -96,7 +102,7 @@
       // Reset
       selectedStatus = "";
       document.getElementById("aktivitas").value = "";
-      document.getElementById("shift").value = "";
+      document.getElementById("zona").value = "";
       updateInfo();
     }
 
